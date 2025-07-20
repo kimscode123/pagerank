@@ -2,6 +2,7 @@ import os
 import random
 import re
 import sys
+import copy
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -60,7 +61,7 @@ def transition_model(corpus, page, damping_factor):
     
     visit_probability = dict()
 
-    linked_page = random.choice(corpus[page]) # select a random page linked to by that page
+    linked_page = random.choice(page) # select a random page linked to by that page
     other_pages = set()
 
     for i in corpus:
@@ -86,12 +87,7 @@ def sample_pagerank(corpus, damping_factor, n):
 
     pagerank = dict()
 
-    for i in range(len(corpus)): # loop through all pages, each page value/n
-        pagerank.update(transition_model(corpus, corpus[i], damping_factor)) # should update all keys and values into the current dictionary
-
-    for key, value in pagerank:
-        # updates all values by dividing them by n
-        pagerank[key] = value/n
+    pagerank.update(transition_model(corpus, corpus[n], damping_factor)) # should update all keys and values into the current dictionary
     
     return pagerank
 
@@ -108,8 +104,30 @@ def iterate_pagerank(corpus, damping_factor):
     N = len(corpus)
     pagerank = dict()
 
+    # start off by setting all pagerank to 1/N
     for page in corpus:
-        pagerank[page] = ((1 - damping_factor)/N) + (damping_factor * (i for i in page: ))
+        pagerank[page] = 1/N # assumes all pages are equally likely to be visited
+
+    difference = copy.deepcopy(pagerank) # variable to check if probability of pagerank changes by more than .001
+
+    while True:
+        count = 0 # counts the amount of page's pagerank that have an accuracy within .001
+
+        for page in corpus:
+            pagerank[page] = ((1 - damping_factor)/N) + (damping_factor * sum([i for i in page if i]/len(page)))
+            difference[page] = difference[page] - pagerank[page]
+        
+        for page in corpus:
+            if abs(difference[page]) <= .001:
+                count += 1
+
+            if count == N:
+                break
+            elif count > N:
+                print("Count is greater than number of pages in corpus")
+                break
+
+        difference = copy.deepcopy(pagerank)
 
     return pagerank
 
