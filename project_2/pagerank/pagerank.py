@@ -87,10 +87,18 @@ def sample_pagerank(corpus, damping_factor, n):
 
     pagerank = dict()
 
-    pagerank.update(transition_model(corpus, corpus[n], damping_factor)) # should update all keys and values into the current dictionary
-    
-    return pagerank
+    starting_page = random.choice(corpus) # should randomly choose a page from the corpus
+    sampled_pages = transition_model(corpus, starting_page, damping_factor)
 
+    count = 1
+    while count <= n:
+        for key, value in sampled_pages.items():
+            pagerank[key] = value # Gets the key and value of the recently sampled page and adds it to the dictionary
+
+        sampled_pages = transition_model(sampled_pages, sampled_pages[count], damping_factor) # returns a dictionary of multiple pages
+        count += 1
+
+    return pagerank
 
 def iterate_pagerank(corpus, damping_factor):
     """
